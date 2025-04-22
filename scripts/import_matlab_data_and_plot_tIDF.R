@@ -1,3 +1,6 @@
+# to do!
+# there was a transect with 1600 or so frames. change that. Or is that Jochens analysed data?
+
 # Load required libraries
 library(R.matlab)
 library(ggplot2)
@@ -34,42 +37,25 @@ process_single_idf <- function(mat_path) {
 idf_2024 <- process_single_idf("../matlab/results/belowCanopyBCI2024.mat")
 idf_2023 <- process_single_idf("../matlab/results/jochen_results/2023Panama_below.mat")
 
-# === Extract data from both .mat files ===
-df_2024 <- extract_transect_data(idf_2024, source_label = "2024")
-df_2023 <- extract_transect_data(idf_2023, source_label = "2023")
+glimpse(idf_2023)
+vars_to_include <- c("rms_diff", "slice", "name", "distance")
+idf_2023 <- idf_2023 %>% select(all_of(vars_to_include))
+idf_2024 <- idf_2024 %>% select(all_of(vars_to_include))
 
 # === Combine and prepare for plotting ===
-plot_df <- rbind(df_2023, df_2024)
+plot_df <- rbind(idf_2023, idf_2024)
 
 # Factor order for consistent plotting
 plot_df$slice <- factor(plot_df$slice, levels = c(
   "IDFMinus9045", "IDFMinus450", "IDF045", "IDF4590", "IDFAll"
 ))
-plot_df$transect <- factor(plot_df$transect)
-plot_df$source <- factor(plot_df$source)
 
-unique(plot_df$transect)
+plot_df$name <- unlist(plot_df$name)
+plot_df$name <- factor(plot_df$name)
+glimpse(plot_df)
 
-# === Plot ===
-df_2024 %>% filter(transect != "below Trail 18") %>%
-  ggplot(aes(x = distance, y = rms_diff, color = source)) +
-  geom_line() +
-  labs(
-    x = "Distance (m)",
-    y = "RMS Pixel Difference"
-  ) +
-  theme_minimal() +
-  theme(
-    #   legend.title = element_blank(),
-    strip.background = element_blank(),
-    strip.placement = "outside",
-    legend.position = "top"
-  ) +
-  facet_grid(transect ~ slice, switch = "both", scales = "free", space = "free",
-             labeller = labeller(label_wrap_gen(1)))
-
-p <- plot_df %>% filter(transect != "below Trail 18") %>%
-  ggplot(aes(x = distance, y = rms_diff, color = source)) +
+p <- plot_df %>% filter(name != "below Trail 18") %>% # why am i removing below trail 18??
+  ggplot(aes(x = distance, y = rms_diff)) +
   geom_line() +
   labs(
     x = "Distance (m)",
@@ -82,7 +68,7 @@ p <- plot_df %>% filter(transect != "below Trail 18") %>%
     strip.placement = "outside",
     legend.position = "top"
   ) +
-  facet_grid(transect ~ slice, switch = "both", scales = "free", space = "free",
+  facet_grid(name ~ slice, switch = "both", scales = "free", space = "free",
              labeller = labeller(label_wrap_gen(1)))
 ggsave("plots/belowCanopyTransectsMetrop.png",
        plot = p, width = 12, height = 8, dpi = 300)
@@ -95,7 +81,7 @@ canopy<- canopy[-20:-25,,-1, drop = F]
 # change names of structure to match the function above
 dimnames(idf_2023)
 newNames <- dimnames(canopy)[[1]]
-newNames[which(newNames %in% c("IDF45", "IDF90", "IDF135"))] <- c("IDFMinus9045", "IDFMinus450", "IDF045")
+newNames[which(newNames %in% c("IDF45", "IDF90f", "IDF135"))] <- c("IDFMinus9045", "IDFMinus450", "IDF045")
 dimnames(canopy)[[1]] <- newNames
 
 # next up, change function so that it doesnt try to work on rows that dont exist
