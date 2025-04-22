@@ -34,44 +34,6 @@ process_single_idf <- function(mat_path) {
 idf_2024 <- process_single_idf("../matlab/results/belowCanopyBCI2024.mat")
 idf_2023 <- process_single_idf("../matlab/results/jochen_results/2023Panama_below.mat")
 
-# === Define a helper function to extract data from each file ===
-extract_transect_data <- function(idf, source_label) {
-  n_transects <- dim(idf)[3]
-  plot_data <- list()
-  
-  for (i in 1:n_transects) {
-    tr <- idf[,,i]
-    
-    transect_name <- tr$name[[1]]
-    distance      <- as.vector(tr$distance)
-    
-    slices <- list(
-      IDFMinus9045 = tr$IDFMinus9045,
-      IDFMinus450  = tr$IDFMinus450,
-      IDF045       = tr$IDF045,
-      IDF4590      = tr$IDF4590,
-      IDFAll       = tr$IDFAll
-    )
-    
-    for (slice_name in names(slices)) {
-      mat <- slices[[slice_name]]
-      rms_profile <- mat[180, ]  # Extract row at 180° rotation
-      
-      df <- data.frame(
-        transect = transect_name,
-        distance = distance,
-        rms_diff = rms_profile,
-        slice = slice_name,
-        source = source_label
-      )
-      
-      plot_data[[length(plot_data) + 1]] <- df
-    }
-  }
-  
-  return(do.call(rbind, plot_data))
-}
-
 # === Extract data from both .mat files ===
 df_2024 <- extract_transect_data(idf_2024, source_label = "2024")
 df_2023 <- extract_transect_data(idf_2023, source_label = "2023")
